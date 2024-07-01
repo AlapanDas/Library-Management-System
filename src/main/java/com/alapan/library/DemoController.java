@@ -1,55 +1,38 @@
 package com.alapan.library;
 
-import java.util.Arrays;
-import java.util.Vector;
-
-import org.springframework.stereotype.Controller;
-import com.alapan.LibraryManagement.Lib.src.DatabaseConfig.BookController;
-
-import org.springframework.web.bind.annotation.GetMapping;
 import com.alapan.LibraryManagement.Lib.src.BookConfig.Book;
-import com.alapan.LibraryManagement.Lib.src.BookConfig.EmptyAttribute;
+import com.alapan.LibraryManagement.Lib.src.DatabaseConfig.BookController;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-@Controller
+@RestController
+@RequestMapping("/books")
 public class DemoController {
 
-    public String driver(Book obj) {
+    @PostMapping("/create")
+    public ResponseEntity<String> createBook(@RequestBody String bookJson) throws JsonProcessingException {
 
+        ObjectMapper mapper = new ObjectMapper();
+
+        Book obj = mapper.readValue(bookJson, Book.class);
         BookController controller = new BookController(obj);
 
         try {
             BookController.MethodType methodType = BookController.MethodType.valueOf("CREATE_BOOK");
-            controller.invokeMethod(methodType);
-            return "Book Created";
+            
+            try {
+                String status=controller.invokeMethod(methodType);
+                return new ResponseEntity<>(status, HttpStatus.CREATED);
+            } catch (Exception e) {
+                return new ResponseEntity<>(e.getMessage(),HttpStatus.NOT_ACCEPTABLE);
+            }
+            
         } catch (Exception e) {
-            System.out.println(e);
-            return "Error";
-        }
-    }
-
-    @GetMapping("/hello")
-    @ResponseBody
-    public String helloWorld(
-            @RequestParam(name = "ISBN") String isbn,
-            @RequestParam(name = "Year") int year,
-            @RequestParam(name = "Author") String author,
-            @RequestParam(name = "Name") String name,
-            @RequestParam(name = "Publication") String publication,
-            @RequestParam(name = "Tags") String tagsParam) {
-
-        Vector<String> tags = new Vector<>(Arrays.asList(tagsParam.split(",")));
-
-        try {
-            Book obj = new Book(isbn, year, author, name, publication, tags);
-            String res = driver(obj);
-            System.out.println(res);
-            return obj.getName();
-        } catch (EmptyAttribute e) {
-            System.out.println(e);
-            return "Error: " + e.getMessage();
+            e.printStackTrace();
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CREATED);
         }
     }
 }

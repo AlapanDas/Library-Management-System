@@ -11,8 +11,11 @@ import com.google.gson.*;
 
 public class BookController {
      // Global Variables
-     final String url = "jdbc:mysql://localhost/library?user=root&password=6969";
+     String url = "jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:6543/postgres";
+     String user = "postgres.sgkcxzcwstcejwxjgigw";
+     String password = "46qVYfQ3j3Hj";
      private Book obj;
+
      // Creating a connection object to initialize connection
      Connection conn = null;;
      // Creates a precompiled sql statement and replaces variable with '?'
@@ -28,7 +31,7 @@ public class BookController {
           this.obj = obj;
      }
 
-     private void CreateBook() {
+     private String CreateBook() {
 
           // Extracting the parameters from the object
           Vector<String> tags = obj.getTags();
@@ -41,12 +44,12 @@ public class BookController {
           String Author = obj.getAuthor();
 
           try {
-               conn = DriverManager.getConnection(url);
+               conn = DriverManager.getConnection(url, user, password);
 
                if (!conn.isClosed())
                     System.out.println("Connected");
 
-               String sql = "INSERT INTO lib (ISBN, Name, Author, Year, Publication, Tags) VALUES (?, ?, ?, ?, ?, ?)";
+               String sql = "INSERT INTO lib (\"ISBN\", \"Name\", \"Author\", \"Year\", \"Publication\", \"Tags\") VALUES (?, ?, ?, ?, ?, CAST(? AS JSON))";
                pstmt = conn.prepareStatement(sql);
                pstmt.setString(1, ISBN);
                pstmt.setString(2, Name);
@@ -64,10 +67,10 @@ public class BookController {
                // System.out.println("ID: " + id + ", Name: " + name + last + " " + ", Email: "
                // + email);
                // }
-               System.out.println("Book stored successfully in the database.");
+               return "Book stored successfully in the database.";
 
           } catch (SQLException ex) {
-               ex.printStackTrace();
+               return ex.getMessage();
                // System.out.println("SQLException: " + ex.getMessage());
                // System.out.println("SQLState: " + ex.getSQLState());
                // System.out.println("VendorError: " + ex.getErrorCode());
@@ -101,10 +104,12 @@ public class BookController {
                pstmt = conn.prepareStatement(sql);
                pstmt.setString(1, ISBN);
                pstmt.executeUpdate();
+               // return ("Book deleted successfully from the database.");
                System.out.println("Book deleted successfully from the database.");
 
           } catch (Exception e) {
-               System.out.println(e);
+               e.printStackTrace();
+               // return (e.getMessage());
 
           } finally {
                try {
@@ -118,16 +123,13 @@ public class BookController {
           }
      }
 
-     public void invokeMethod(MethodType method) throws EmptyAttribute {
+     public String invokeMethod(MethodType method) throws EmptyAttribute {
           switch (method) {
                case CREATE_BOOK:
-                    CreateBook();
-                    break;
-               case DELETE_BOOK:
-                    DeleteBook();
-                    break;
+                    String rs=CreateBook();
+                    return rs;
                default:
-                    break;
+                    return "";
           }
      }
 }

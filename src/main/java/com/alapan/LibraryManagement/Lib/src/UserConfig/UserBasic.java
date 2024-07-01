@@ -8,7 +8,7 @@ public class UserBasic {
           try {
                Book obj = new Book(null, 0, null, null, null, null);
                return obj;
-          } catch (EmptyAttribute e) {
+          } catch (Exception e) {
                e.getMessage();
                return null;
           }

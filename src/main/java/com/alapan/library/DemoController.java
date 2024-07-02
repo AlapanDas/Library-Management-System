@@ -14,8 +14,7 @@ public class DemoController {
 
     @PostMapping("/create")
     public ResponseEntity<String> createBook(@RequestBody String bookJson) throws JsonProcessingException {
-
-        ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = new ObjectMapper();
 
         Book obj = mapper.readValue(bookJson, Book.class);
         BookController controller = new BookController(obj);
@@ -24,7 +23,49 @@ public class DemoController {
             BookController.MethodType methodType = BookController.MethodType.valueOf("CREATE_BOOK");
             
             try {
-                String status=controller.invokeMethod(methodType);
+                final String status=controller.invokeMethod(methodType);
+                return new ResponseEntity<>(status, HttpStatus.CREATED);
+            } catch (Exception e) {
+                return new ResponseEntity<>(e.getMessage(),HttpStatus.NOT_ACCEPTABLE);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CREATED);
+        }
+    }
+    @PostMapping("/delete")
+    public ResponseEntity<String> deleteBook(@RequestBody String bookJson) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        Book obj = mapper.readValue(bookJson, Book.class);
+        BookController controller = new BookController(obj);
+
+        try {
+            BookController.MethodType methodType = BookController.MethodType.valueOf("DELETE_BOOK");
+            
+            try {
+                final String status=controller.invokeMethod(methodType);
+                return new ResponseEntity<>(status, HttpStatus.CREATED);
+            } catch (Exception e) {
+                return new ResponseEntity<>(e.getMessage(),HttpStatus.NOT_ACCEPTABLE);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CREATED);
+        }
+    }
+    @PostMapping("/search")
+    public ResponseEntity<String> searchBook(@RequestBody String bookJson) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        Book obj = mapper.readValue(bookJson, Book.class);
+        BookController controller = new BookController(obj);
+
+        try {
+            BookController.MethodType methodType = BookController.MethodType.valueOf("SEARCH_BOOK");
+            
+            try {
+                final String status=controller.invokeMethod(methodType);
                 return new ResponseEntity<>(status, HttpStatus.CREATED);
             } catch (Exception e) {
                 return new ResponseEntity<>(e.getMessage(),HttpStatus.NOT_ACCEPTABLE);

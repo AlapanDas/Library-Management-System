@@ -3,6 +3,7 @@ package com.alapan.LibraryManagement.Lib.src.DatabaseConfig;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Vector;
 import com.alapan.LibraryManagement.Lib.src.BookConfig.Book;
@@ -24,7 +25,7 @@ public class BookController {
      Gson gson = new Gson();
 
      public enum MethodType {
-          CREATE_BOOK, DELETE_BOOK
+          CREATE_BOOK, DELETE_BOOK, SEARCH_BOOK
      }
 
      public BookController(Book obj) {
@@ -47,7 +48,7 @@ public class BookController {
                conn = DriverManager.getConnection(url, user, password);
 
                if (!conn.isClosed())
-                    System.out.println("Connected");
+                    System.out.println("Connected for Creation");
 
                String sql = "INSERT INTO lib (\"ISBN\", \"Name\", \"Author\", \"Year\", \"Publication\", \"Tags\") VALUES (?, ?, ?, ?, ?, CAST(? AS JSON))";
                pstmt = conn.prepareStatement(sql);
@@ -59,21 +60,10 @@ public class BookController {
                pstmt.setString(6, tagsJson);
                pstmt.executeUpdate();
 
-               // while (rs.next()) {
-               // String id = rs.getString("ROLL");
-               // String name = rs.getString("FIRST_NAME");
-               // String last = rs.getString("LAST_NAME");
-               // String email = rs.getString("EMAIL");
-               // System.out.println("ID: " + id + ", Name: " + name + last + " " + ", Email: "
-               // + email);
-               // }
                return "Book stored successfully in the database.";
 
           } catch (SQLException ex) {
                return ex.getMessage();
-               // System.out.println("SQLException: " + ex.getMessage());
-               // System.out.println("SQLState: " + ex.getSQLState());
-               // System.out.println("VendorError: " + ex.getErrorCode());
 
           } finally {
                // Close the resources
@@ -88,28 +78,73 @@ public class BookController {
           }
      }
 
-     private void DeleteBook() {
+     private String DeleteBook() {
 
-          // Since we only require Primary Key to delete the record, we need only ISBN
-          // Number
+          // Since we only require Primary Key to delete the record, we need only ISBN Number
+
+
           String ISBN = obj.getISBN();
-
           try {
-               conn = DriverManager.getConnection(url);
+               conn = DriverManager.getConnection(url, user, password);
 
                if (!conn.isClosed())
-                    System.out.println("Connected");
+                    System.out.println("Connected for Deletion");
 
-               String sql = "DELETE FROM lib WHERE ISBN=?";
+               String sql = "DELETE FROM public.lib WHERE \"ISBN\" = ?";
                pstmt = conn.prepareStatement(sql);
                pstmt.setString(1, ISBN);
                pstmt.executeUpdate();
-               // return ("Book deleted successfully from the database.");
-               System.out.println("Book deleted successfully from the database.");
+               return ("Book deleted successfully from the database.");
 
           } catch (Exception e) {
                e.printStackTrace();
-               // return (e.getMessage());
+               return (e.getMessage());
+
+          } finally {
+               try {
+                    if (pstmt != null)
+                         pstmt.close();
+                    if (conn != null)
+                         conn.close();
+               } catch (SQLException ex) {
+                    ex.printStackTrace();
+               }
+          }
+     }
+
+     private String SearchBook() {
+          String ISBN = obj.getISBN();
+          try {
+               conn = DriverManager.getConnection(url, user, password);
+               if (!conn.isClosed())
+                    System.out.println("Connected for Searching");
+
+               String sql = "SELECT * FROM public.lib WHERE \"ISBN\" = ?";
+               pstmt = conn.prepareStatement(sql);
+               pstmt.setString(1, ISBN);
+               ResultSet rs = pstmt.executeQuery();
+
+               if (rs.next()) {
+                    String isbn = rs.getString("ISBN");
+                    int year = rs.getInt("Year");
+                    String author = rs.getString("Author");
+                    String name = rs.getString("Name");
+                    String publication = rs.getString("Publication");
+                    String tagsJson = rs.getString("Tags");
+                    @SuppressWarnings("unchecked")
+                    Vector<String> tags = gson.fromJson(tagsJson, Vector.class);
+
+                    Book foundBook = new Book(isbn, year, author, name, publication, tags);
+                    String bookJson = gson.toJson(foundBook);
+
+                    return bookJson;
+               } else {
+                    return ("Book not found");
+               }
+
+          } catch (Exception e) {
+               e.printStackTrace();
+               return (e.getMessage());
 
           } finally {
                try {
@@ -126,10 +161,17 @@ public class BookController {
      public String invokeMethod(MethodType method) throws EmptyAttribute {
           switch (method) {
                case CREATE_BOOK:
-                    String rs=CreateBook();
-                    return rs;
+                    String cb = CreateBook();
+                    return cb;
+               case DELETE_BOOK:
+                    String db = DeleteBook();
+                    return db;
+               case SEARCH_BOOK:
+                    String sb = SearchBook();
+                    return sb;
                default:
                     return "";
           }
      }
+
 }

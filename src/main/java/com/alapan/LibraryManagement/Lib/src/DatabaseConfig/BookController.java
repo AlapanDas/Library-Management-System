@@ -25,7 +25,7 @@ public class BookController {
      Gson gson = new Gson();
 
      public enum MethodType {
-          CREATE_BOOK, DELETE_BOOK, SEARCH_BOOK
+          CREATE_BOOK, DELETE_BOOK, SEARCH_BOOK,GET_BOOKS
      }
 
      public BookController(Book obj) {
@@ -80,8 +80,8 @@ public class BookController {
 
      private String DeleteBook() {
 
-          // Since we only require Primary Key to delete the record, we need only ISBN Number
-
+          // Since we only require Primary Key to delete the record, we need only ISBN
+          // Number
 
           String ISBN = obj.getISBN();
           try {
@@ -158,6 +158,43 @@ public class BookController {
           }
      }
 
+     public String GetBook() {
+          try {
+               conn = DriverManager.getConnection(url, user, password);
+               if (!conn.isClosed())
+                    System.out.println("Connected for Searching");
+
+               String sql = "SELECT L.*, C.\"URL\"\n" + "FROM LIB L\n" + "INNER JOIN COVERS C ON L.\"ISBN\" = C.id\n"
+                         + "ORDER BY C.\"URL\" ASC\n" + "LIMIT 50;";
+               pstmt = conn.prepareStatement(sql);
+               ResultSet rs = pstmt.executeQuery();
+               JsonArray results= new JsonArray();
+
+               while (rs.next()) {
+                    String isbn = rs.getString("ISBN");
+                    int year = rs.getInt("Year");
+                    String author = rs.getString("Author");
+                    String name = rs.getString("Name");
+                    String publication = rs.getString("Publication");
+                    String urls = rs.getString("URL");
+
+                    JsonObject item = new JsonObject();
+                    item.addProperty("ISBN", isbn);
+                    item.addProperty("Year", year);
+                    item.addProperty("Author", author);
+                    item.addProperty("Name", name);
+                    item.addProperty("Publication", publication);
+                    item.addProperty("url", urls);
+                    results.add(item);
+               } 
+               return results.toString();
+          } catch (Exception e) {
+               System.out.println(e.getLocalizedMessage());
+          }
+          return "Error";
+
+     }
+
      public String invokeMethod(MethodType method) throws EmptyAttribute {
           switch (method) {
                case CREATE_BOOK:
@@ -169,6 +206,9 @@ public class BookController {
                case SEARCH_BOOK:
                     String sb = SearchBook();
                     return sb;
+               case GET_BOOKS:
+                    String gb = GetBook();
+                    return gb;
                default:
                     return "";
           }
